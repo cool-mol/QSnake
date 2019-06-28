@@ -1,0 +1,145 @@
+﻿#ifndef GAMEWIDGET_H
+#define GAMEWIDGET_H
+
+#include <QBrush>
+#include <QButtonGroup>
+#include <QIcon>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QMessageBox>
+#include <QPaintEvent>
+#include <QPainter>
+#include <QPalette>
+#include <QPixmap>
+#include <QPoint>
+#include <QPushButton>
+#include <QStyle>
+#include <QTime>
+#include <QTimer>
+#include <QWidget>
+#include <ctime>
+#include <list>
+#include <random>
+#include <vector>
+const int posMax = 20;  //定义最大边界
+// 定义随机数生成器
+typedef std::uniform_int_distribution<int> uni;
+typedef std::default_random_engine eng;
+// 声明三个游戏窗口类，食物类和蛇类
+class gameWidget;
+class Food;
+class Snake;
+// 分别将方向、食物种类、蛇的种类定义出来
+enum Direction { zero, Up, Down, Left, Right };
+enum FoodType { normalFood, yellowFood };
+enum SnakeStatus { normalSnake, yellowSnake };
+// 定义蛇的节点和方向
+struct snakeNode {
+    QPoint pos;
+    Direction facePos;
+
+    snakeNode(QPoint p = QPoint(0, 0), Direction f = zero)
+        : pos(p), facePos(f) {}
+};
+
+// 蛇类的定义
+class Snake {
+   private:
+    std::vector<snakeNode> points;
+    int length;
+    // Direction dir;
+    SnakeStatus status;
+    Direction dirKey;
+
+   public:
+    int level;
+    int score;
+
+    Snake();
+    // 查询坐标是否在蛇身上
+    bool insideSnake(QPoint p);
+    // 修改蛇的方向
+    void changeDirect(Direction d);
+    void yellowDirect(Direction d);
+    // 维护头和尾巴移动，并检查最后一个拐点是否需要删去
+    void update(int is_eatFood = 0);
+    // 获取蛇的当前长度
+    int getLength() const { return length; }
+    // 获取蛇的坐标
+    std::vector<snakeNode> getPoints() const { return points; }
+    // 获取蛇的方向
+    Direction getDir() const { return points[0].facePos; }
+    // 从键盘获取每条蛇各自的方向（防止漂移）
+    Direction getDirKey() const { return dirKey; }
+    // 捕获键盘的输入（防止漂移）
+    void keyCatch(Direction d);
+};
+// 食物类的定义
+class Food {
+   private:
+    FoodType type;
+
+    std::vector<QPoint> pos;
+
+   public:
+    // 默认构造食物为普通食物
+    Food(FoodType t = normalFood,
+         std::vector<Snake *> snakeList = std::vector<Snake *>(),
+         uni uniform = uni(1, posMax));
+    // 维护果子的刷新
+    void update(int level = 0);
+    // 获取果子的位置
+    std::vector<QPoint> getPos() const;
+    //获取果子的类型
+    FoodType getFoodType() const;
+};
+// 游戏窗口类
+class gameWidget : public QWidget {
+    Q_OBJECT
+   public:
+    explicit gameWidget(QWidget *parent = 0);
+    void paintEvent(QPaintEvent *);
+    void keyPressEvent(QKeyEvent *e);
+    void abc();
+    void upDate();
+    static eng engine;
+
+    std::vector<Food *> foodList;	//食物链
+    std::vector<Snake *> snakeList;  //🐍链
+
+    QPushButton *upButton;  //上键 实际实现中被剔除，但是写在这里装个好看
+    QPushButton *downButton;  //下键 实际实现中被剔除，但是写在这里装个好看
+    QPushButton *leftButton;  //左键 实际实现中被剔除，但是写在这里装个好看
+    QPushButton *rightButton;  //右键 实际实现中被剔除，但是写在这里装个好看
+    QPushButton *startButton;	 //普通模式开始按钮
+    QPushButton *exitButton;	  //退出游戏按钮
+    QPushButton *doubleButton;	// 双人模式按钮
+    QPushButton *crazyButton;	 // 疯狂模式按钮
+    QPushButton *continueButton;  // 继续游戏按钮
+    QLabel *scoreLabel;			  // 计分板
+    QLabel *levelLabel;			  // 等级板
+    QLabel *ScoreLabelNumber;	 // 分数
+    QLabel *LevelLabelNumber;	 // 等级
+    QTimer *timer;				  // 整个游戏的计时器
+    QTimer *yellowTimer;		  //为黄苹果定义一个计时器
+    QButtonGroup *buttonGroup;  //上下左右四个键构成一个按钮组，根据它们的返回值改变方向的值
+                                //实际实现中已经被移除
+
+   private:
+    QPalette *palette;
+
+   signals:
+
+   public slots:
+    void timeout();		   // timer 的 响应槽函数
+    void yellowTimeout();  // yellowTimer 的 响应槽函数
+    void startPush();
+    void exitPush();
+    void pausePush();
+    void checkGameOver();
+    void doublePush();
+    void crazyPush();
+    void continuePush();
+};
+
+#endif  // GAMEWIDGET_H
